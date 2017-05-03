@@ -1,0 +1,96 @@
+from functools import partial
+from stop_words import get_stop_words
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.lancaster import LancasterStemmer
+from nltk.stem import WordNetLemmatizer
+import os
+import fnmatch
+import re
+
+processors = [PorterStemmer().stem, LancasterStemmer().stem, WordNetLemmatizer().lemmatize]
+stop_words = get_stop_words('en')
+try:
+    stop_words.remove('.')
+except:
+    None
+
+
+def __asStream(aFile):
+    with open(aFile, 'r') as fd:
+        aLine = fd.readline()
+        yield aLine
+        while aLine:
+            aLine = fd.readline()
+            yield aLine
+
+
+def __pipe(wordGenerator, processorList):
+    goodWords = filter(lambda x: x.lower() not in stop_words, wordGenerator)
+    for aWord in goodWords:
+        for p in processorList:
+            aWord = processors[p](aWord)
+        yield aWord
+
+
+def strip(source, processorList=[]):
+    if isinstance(source, basestring):
+        return __pipe(source.split(), processorList)
+    elif isinstance(source, list):
+        return __pipe(source, processorList)
+
+
+def _removeStopWod(aLine):
+    return filter(lambda x: x.lower() not in stop_words, aLine.split())
+
+def _bb(sentences, words, a, b):
+    words.add(b)
+    st = ' '.join([a, b])
+    if b.endswith('.'):
+        sentences.append(st)
+        return ''
+    else:
+        return st
+
+
+def _toSentences(listOfWords):
+    sentences =[]
+    mypartial = partial(_bb, sentences, set())
+    sentences.append(reduce(mypartial,listOfWords))
+    return sentences
+
+def driver():
+    src = '/home/arun/Downloads/2016/JAN/3/'
+    dirReader = (os.path.join(root, filename) \
+                 for root, dirnames, filenames in os.walk(src) \
+                 for filename in fnmatch.filter(filenames, "2.txt"))
+
+    lineReader = (__asStream(aFile) for aFile in dirReader)
+
+    lineGenerator = (aline for lineGenerator in lineReader \
+                     for aline in lineGenerator)
+
+    wordGenerator = (strip(aLine) for aLine in lineGenerator)
+
+    goodWords = set()
+    sentences = []
+    mypartial = partial(_bb, sentences, goodWords)
+    for wordList in wordGenerator:
+        sentences.append(reduce(mypartial, wordList))
+
+    # for ww in goodWords:
+    for line in sentences:
+        print line
+
+
+def strlen(s):
+    if s == "": return 0
+    return s.rindex(s[-1]) + 1
+
+
+driver()
+# print stop_words
+line="a the all mill. are be before me for then  Japan again fox am A of"
+for aline in _toSentences(line.split()):
+    print aline
+gw = _removeStopWod(line)
+
