@@ -1,0 +1,51 @@
+import talib
+import numpy
+from talib import abstract
+
+def enrich(dic, features, result):
+    headers=''
+    for aType in features:
+        for func in talib.get_function_groups()[aType]:
+            print func
+            pf = abstract.Function(func)
+            try:
+                pf.input_arrays = dic
+                pf.run()
+                outputs = pf.outputs
+                if isinstance(outputs, list):
+                    for anItem , name in zip(outputs, pf.output_names):
+                        result = numpy.hstack((result, anItem.reshape(anItem.size,1)))
+                        headers = ','.join([headers, name])
+                else:
+                    result = numpy.hstack((result, outputs.reshape(outputs.size,1)))
+                    headers = ','.join([headers,func])
+            except:
+                print 
+    return result, headers
+
+features = {
+'Overlap Studies',
+#    'Pattern Recognition',
+#     'Volume Indicators',
+#     'Cycle Indicators',
+#     'Volatility Indicators',
+#  'Momentum Indicators'
+
+ }
+sample_data = numpy.genfromtxt("data.txt", delimiter="\t", skip_header=True)
+sample_data = numpy.column_stack(sample_data)
+open = sample_data[0].astype(float)
+high = sample_data[1].astype(float)
+low = sample_data[2].astype(float)
+close = sample_data[3].astype(float)
+result = numpy.empty(shape=(open.shape[0],1),dtype=float)
+
+inputDict = {'high':high,
+             'close':close,
+             'open':open,
+             'low':low,
+             'volume':close,
+             'timeperiod':3}
+
+result, headers = enrich(inputDict, features, result)
+numpy.savetxt('enrich.csv', result, delimiter=',', fmt='%10.0f', header=headers)
