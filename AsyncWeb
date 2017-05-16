@@ -1,0 +1,29 @@
+import unirest
+from functools import partial
+
+
+def respCallback(stockName, dump, doneCallback, response):
+ # print response
+ print "code:"+ str(response.code)
+ print "******************"
+ print "headers:"+ str(response.headers)
+ print "******************"
+ print "body:"+ str(response.body)
+ print "******************"
+ print "raw_body:"+ str(response.raw_body)
+ with open(dump+'\'+stockName, "a") as myfile:
+    myfile.write("appended text")
+ doneCallback(dump+'\'+stockName)
+ 
+# consume async get request
+def download(uri, stockName, dump, doneCallback):
+ params = {'test1':'param1','test2':'param2'}
+ url = 'http://httpbin.org/get'
+ headers = {"Accept": "application/json"}
+ # call get service with headers and params
+ respP = partial(respCallback, stockName, dump, doneCallback)
+ unirest.get(url, headers = headers,params = params, callback = respP)
+
+
+def downloadAll():
+  
